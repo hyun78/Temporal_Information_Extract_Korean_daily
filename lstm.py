@@ -56,9 +56,13 @@ def ptb_raw_data(data_path=None):
 	tuple (train_data, valid_data, test_data, vocabulary)
 	각각의 data object 들은 PTBIterator로 전달(pass) 될 수 있다.
 	"""
-	train_path = "ptb.train.txt"
-	valid_path = "ptb.valid.txt"
-	test_path = "ptb.test.txt"
+
+	# data path를 하나의 filename으로 받기
+	filename = data_path 
+
+	train_path = filename+".train.txt"
+	valid_path = filename+".valid.txt"
+	test_path = filename+".test.txt"
 
 	word_to_id = _build_vocab(train_path)
 	train_data = _file_to_word_ids(train_path, word_to_id)

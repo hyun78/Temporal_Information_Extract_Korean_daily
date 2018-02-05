@@ -105,7 +105,7 @@ def split_data(filename):
 	train_list = data[:train_idx]
 	valid_list = data[train_idx:valid_idx]
 	test_list = data[valid_idx:]
-	lists = [[train_list,'train'],[valid_list,'valid'],[test_list,'test']]
+	lists = [[train_list,'.train'],[valid_list,'.valid'],[test_list,'.test']]
 	
 	for fdata in lists:
 		with open(filename+fdata[1]+'.txt','w') as f:
