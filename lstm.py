@@ -211,7 +211,7 @@ class PTBModel(object):
 		except:
 			embedding = tf.get_variable("embedding", [vocab_size, size], dtype=data_type())
 			inputs = tf.nn.embedding_lookup(embedding, input_.input_data)
-		
+
 		if is_training and config.keep_prob < 1:
 			inputs = tf.nn.dropout(inputs, config.keep_prob)
 
@@ -416,7 +416,43 @@ def get_config():
 def main(_):
 	if not FLAGS.data_path:
 		raise ValueError("Must set --data_path to PTB data directory")
+	if FLAGS.data_path="TESTING":
+		#저장된 세션 불러오기
 
+		#세션을 연다
+		sess = tf.Session()
+
+		#기존 변수 초기화
+		sess.run(tf.global_variables_initializer())
+
+		#불러오기 
+		new_saver = tf.train.import_meta_graph('res/model.ckpt-30199.meta')
+
+		#new saver restore? 이건 뭐하는걸까?
+		new_saver.restore(sess, tf.train.latest_checkpoint('res/'))
+
+		#perplexity 
+		#train data import
+
+		raw_data = ptb_raw_data('ptb')
+		train_data, valid_data, test_data, _ = raw_data
+
+		config = get_config()
+		eval_config = get_config()
+		eval_config.batch_size = 1
+		eval_config.num_steps = 1
+		print("config ok.")
+		with tf.Graph().as_default():
+			initializer = tf.random_uniform_initializer(-config.init_scale,config.init_scale)
+			with tf.name_scope("Test"):
+				test_input = PTBInput(config=eval_config, data=test_data, name="TestInput")
+				with tf.variable_scope("Model", reuse=True, initializer=initializer):
+					mtest = PTBModel(is_training=False, config=eval_config,input_=test_input)	
+			sv = tf.train.Supervisor(logdir="savepath")
+			with sv.managed_session() as session:
+				test_perplexity = run_epoch(session, mtest)
+				print("Test Perplexity: %.3f" % test_perplexity)
+		return 
 	raw_data = ptb_raw_data(FLAGS.data_path)
 	train_data, valid_data, test_data, _ = raw_data
 
