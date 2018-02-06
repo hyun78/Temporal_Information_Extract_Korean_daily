@@ -204,11 +204,14 @@ class PTBModel(object):
 				return tf.contrib.rnn.DropoutWrapper(lstm_cell(), output_keep_prob=config.keep_prob)
 		cell = tf.contrib.rnn.MultiRNNCell([attn_cell() for _ in range(config.num_layers)], state_is_tuple=True)
 		self._initial_state = cell.zero_state(batch_size, data_type())
-
-		with tf.device("/cpu:0"):
+		try:
+			with tf.device("/cpu:0"):
+				embedding = tf.get_variable("embedding", [vocab_size, size], dtype=data_type())
+				inputs = tf.nn.embedding_lookup(embedding, input_.input_data)
+		except:
 			embedding = tf.get_variable("embedding", [vocab_size, size], dtype=data_type())
 			inputs = tf.nn.embedding_lookup(embedding, input_.input_data)
-
+		
 		if is_training and config.keep_prob < 1:
 			inputs = tf.nn.dropout(inputs, config.keep_prob)
 
@@ -350,16 +353,16 @@ class KonlpyConfig(object):
 	""" korean의 경우 config"""
 	init_scale = 0.1
 	learning_rate = 1.0
-	max_grad_norm = 5
-	num_layers = 2
-	num_steps = 20
-	hidden_size = 200
-	max_epoch = 4
-	max_max_epoch = 13
+	max_grad_norm = 1
+	num_layers = 1
+	num_steps = 2
+	hidden_size = 2
+	max_epoch = 1
+	max_max_epoch = 1
 	keep_prob = 1.0
 	lr_decay = 0.5
 	batch_size = 20
-	vocab_size = 10000
+	vocab_size = 13840767
 
 def run_epoch(session, model, eval_op=None, verbose=False):
 	"""Runs the model on the given data."""
