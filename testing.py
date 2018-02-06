@@ -113,3 +113,15 @@ def split_data(filename):
 				f.write(sentence+' \n')
 
 	return 
+def tokenize_data(filename):
+	data = load_txt_file(filename)
+	with open(filename,'w') as f:
+		for sentence in data:
+			try:
+				t = algorithm.kkma.pos(sentence)
+				for tk in t:
+					f.write(tk[0] + ' ')
+				f.write('\n ')
+			except:
+				pass
+	return
