@@ -176,7 +176,7 @@ class PTBInput(object):
 
 class PTBModel(object):
 	"""PTB 모델"""
-	def __init__(self, is_training, config, input_):
+	def __init__(self, is_training, config, input_,is_konlpy=False):
 		self._input = input_
 		batch_size = input_.batch_size
 		num_steps = input_.num_steps
@@ -204,13 +204,14 @@ class PTBModel(object):
 				return tf.contrib.rnn.DropoutWrapper(lstm_cell(), output_keep_prob=config.keep_prob)
 		cell = tf.contrib.rnn.MultiRNNCell([attn_cell() for _ in range(config.num_layers)], state_is_tuple=True)
 		self._initial_state = cell.zero_state(batch_size, data_type())
-		try:
+		if is_konlpy:
+			with tf.device("/cpu:0"):
+				embedding = tf.get_collections(tf.GraphKeys.GLOBAL_VARIABLES,scope="Model/embedding")[0]
+				inputs = tf.nn.embedding_lookup(embedding, input_.input_data)
+		else:
 			with tf.device("/cpu:0"):
 				embedding = tf.get_variable("embedding", [vocab_size, size], dtype=data_type())
 				inputs = tf.nn.embedding_lookup(embedding, input_.input_data)
-		except:
-			embedding = tf.get_variable("embedding", [vocab_size, size], dtype=data_type())
-			inputs = tf.nn.embedding_lookup(embedding, input_.input_data)
 
 		if is_training and config.keep_prob < 1:
 			inputs = tf.nn.dropout(inputs, config.keep_prob)
@@ -234,8 +235,12 @@ class PTBModel(object):
 				outputs.append(cell_output)
 
 		output = tf.reshape(tf.stack(axis=1, values=outputs), [-1, size])
-		softmax_w = tf.get_variable("softmax_w", [size, vocab_size], dtype=data_type())
-		softmax_b = tf.get_variable("softmax_b", [vocab_size], dtype=data_type())
+		if is_konlpy:
+			softmax_w = tf.get_collections(tf.GraphKeys.GLOBAL_VARIABLES,scope="Model/softmax_b")[0]
+			softmax_b = tf.get_collections(tf.GraphKeys.GLOBAL_VARIABLES,scope="Model/softmax_w")[0]
+		else:
+			softmax_w = tf.get_variable("softmax_w", [size, vocab_size], dtype=data_type())
+			softmax_b = tf.get_variable("softmax_b", [vocab_size], dtype=data_type())
 		logits = tf.matmul(output, softmax_w) + softmax_b
 
 		# Reshape logits to be 3-D tensor for sequence loss
@@ -416,23 +421,26 @@ def get_config():
 def main(_):
 	if not FLAGS.data_path:
 		raise ValueError("Must set --data_path to PTB data directory")
-	if FLAGS.data_path="TESTING":
+	if FLAGS.data_path=="TESTING":
 		#저장된 세션 불러오기
 
 		#세션을 연다
 		sess = tf.Session()
 
-		#기존 변수 초기화
-		sess.run(tf.global_variables_initializer())
+		# #기존 변수 초기화
+		# sess.run(tf.global_variables_initializer())
 
-		#불러오기 
+		# metagraph 불러오기 
+		# 메타그래프란 어떤 데이터가 저장되어 있는지 알려주는 데이터라고 볼 수 있을듯.
 		new_saver = tf.train.import_meta_graph('res/model.ckpt-30199.meta')
 
-		#new saver restore? 이건 뭐하는걸까?
+		#new saver restore 
 		new_saver.restore(sess, tf.train.latest_checkpoint('res/'))
 
 		#perplexity 
 		#train data import
+		train_ops = tf.get_collection('eval_op')
+		print("print train ops",train_ops)
 
 		raw_data = ptb_raw_data('ptb')
 		train_data, valid_data, test_data, _ = raw_data
@@ -442,16 +450,17 @@ def main(_):
 		eval_config.batch_size = 1
 		eval_config.num_steps = 1
 		print("config ok.")
-		with tf.Graph().as_default():
+		with sess.as_default():
 			initializer = tf.random_uniform_initializer(-config.init_scale,config.init_scale)
 			with tf.name_scope("Test"):
 				test_input = PTBInput(config=eval_config, data=test_data, name="TestInput")
 				with tf.variable_scope("Model", reuse=True, initializer=initializer):
 					mtest = PTBModel(is_training=False, config=eval_config,input_=test_input)	
-			sv = tf.train.Supervisor(logdir="savepath")
-			with sv.managed_session() as session:
-				test_perplexity = run_epoch(session, mtest)
-				print("Test Perplexity: %.3f" % test_perplexity)
+			
+			test_perplexity = run_epoch(sess, mtest)
+			print("Test Perplexity: %.3f" % test_perplexity)
+
+		print("END!!!")
 		return 
 	raw_data = ptb_raw_data(FLAGS.data_path)
 	train_data, valid_data, test_data, _ = raw_data
