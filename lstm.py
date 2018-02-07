@@ -206,7 +206,7 @@ class PTBModel(object):
 		self._initial_state = cell.zero_state(batch_size, data_type())
 		if is_konlpy:
 			with tf.device("/cpu:0"):
-				embedding = tf.get_collections(tf.GraphKeys.GLOBAL_VARIABLES,scope="Model/embedding")[0]
+				embedding = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope="Model/embedding")[0]
 				inputs = tf.nn.embedding_lookup(embedding, input_.input_data)
 		else:
 			with tf.device("/cpu:0"):
@@ -236,8 +236,8 @@ class PTBModel(object):
 
 		output = tf.reshape(tf.stack(axis=1, values=outputs), [-1, size])
 		if is_konlpy:
-			softmax_w = tf.get_collections(tf.GraphKeys.GLOBAL_VARIABLES,scope="Model/softmax_b")[0]
-			softmax_b = tf.get_collections(tf.GraphKeys.GLOBAL_VARIABLES,scope="Model/softmax_w")[0]
+			softmax_w = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope="Model/softmax_b")[0]
+			softmax_b = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope="Model/softmax_w")[0]
 		else:
 			softmax_w = tf.get_variable("softmax_w", [size, vocab_size], dtype=data_type())
 			softmax_b = tf.get_variable("softmax_b", [vocab_size], dtype=data_type())
@@ -439,8 +439,6 @@ def main(_):
 
 		#perplexity 
 		#train data import
-		train_ops = tf.get_collection('eval_op')
-		print("print train ops",train_ops)
 
 		raw_data = ptb_raw_data('ptb')
 		train_data, valid_data, test_data, _ = raw_data
@@ -455,7 +453,7 @@ def main(_):
 			with tf.name_scope("Test"):
 				test_input = PTBInput(config=eval_config, data=test_data, name="TestInput")
 				with tf.variable_scope("Model", reuse=True, initializer=initializer):
-					mtest = PTBModel(is_training=False, config=eval_config,input_=test_input)	
+					mtest = PTBModel(is_training=False, config=eval_config,input_=test_input,is_konlpy=True)	
 			
 			test_perplexity = run_epoch(sess, mtest)
 			print("Test Perplexity: %.3f" % test_perplexity)
