@@ -204,14 +204,14 @@ class PTBModel(object):
 				return tf.contrib.rnn.DropoutWrapper(lstm_cell(), output_keep_prob=config.keep_prob)
 		cell = tf.contrib.rnn.MultiRNNCell([attn_cell() for _ in range(config.num_layers)], state_is_tuple=True)
 		self._initial_state = cell.zero_state(batch_size, data_type())
-		if is_konlpy:
-			with tf.device("/cpu:0"):
-				embedding = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope="Model/embedding")[0]
-				inputs = tf.nn.embedding_lookup(embedding, input_.input_data)
-		else:
-			with tf.device("/cpu:0"):
-				embedding = tf.get_variable("embedding", [vocab_size, size], dtype=data_type())
-				inputs = tf.nn.embedding_lookup(embedding, input_.input_data)
+		# if is_konlpy:
+		# 	with tf.device("/cpu:0"):
+		# 		embedding = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope="Model/embedding")[0]
+		# 		inputs = tf.nn.embedding_lookup(embedding, input_.input_data)
+		# else:
+		with tf.device("/cpu:0"):
+			embedding = tf.get_variable("embedding", [vocab_size, size], dtype=data_type())
+			inputs = tf.nn.embedding_lookup(embedding, input_.input_data)
 
 		if is_training and config.keep_prob < 1:
 			inputs = tf.nn.dropout(inputs, config.keep_prob)
@@ -235,12 +235,12 @@ class PTBModel(object):
 				outputs.append(cell_output)
 
 		output = tf.reshape(tf.stack(axis=1, values=outputs), [-1, size])
-		if is_konlpy:
-			softmax_w = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope="Model/softmax_b")[0]
-			softmax_b = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope="Model/softmax_w")[0]
-		else:
-			softmax_w = tf.get_variable("softmax_w", [size, vocab_size], dtype=data_type())
-			softmax_b = tf.get_variable("softmax_b", [vocab_size], dtype=data_type())
+		# if is_konlpy:
+		# 	softmax_w = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope="Model/softmax_b")[0]
+		# 	softmax_b = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope="Model/softmax_w")[0]
+		# else:
+		softmax_w = tf.get_variable("softmax_w", [size, vocab_size], dtype=data_type())
+		softmax_b = tf.get_variable("softmax_b", [vocab_size], dtype=data_type())
 		logits = tf.matmul(output, softmax_w) + softmax_b
 
 		# Reshape logits to be 3-D tensor for sequence loss
@@ -430,7 +430,8 @@ def main(_):
 		# #기존 변수 초기화
 		# sess.run(tf.global_variables_initializer())
 
-		# metagraph 불러오기 
+		# metagraph 불러오기
+		graph = tf.Graph() 
 		# 메타그래프란 어떤 데이터가 저장되어 있는지 알려주는 데이터라고 볼 수 있을듯.
 		new_saver = tf.train.import_meta_graph('res/model.ckpt-30199.meta')
 
@@ -439,26 +440,26 @@ def main(_):
 
 		#perplexity 
 		#train data import
+		with graph.as_default():
+			raw_data = ptb_raw_data('ptb')
+			train_data, valid_data, test_data, _ = raw_data
 
-		raw_data = ptb_raw_data('ptb')
-		train_data, valid_data, test_data, _ = raw_data
+			config = get_config()
+			eval_config = get_config()
+			eval_config.batch_size = 1
+			eval_config.num_steps = 1
+			print("config ok.")
+			with sess.as_default():
+				initializer = tf.random_uniform_initializer(-config.init_scale,config.init_scale)
+				with tf.name_scope("Test"):
+					test_input = PTBInput(config=eval_config, data=test_data, name="TestInput")
+					with tf.variable_scope("Model", reuse=True, initializer=initializer):
+						mtest = PTBModel(is_training=False, config=eval_config,input_=test_input,is_konlpy=True)	
+				
+				test_perplexity = run_epoch(sess, mtest)
+				print("Test Perplexity: %.3f" % test_perplexity)
 
-		config = get_config()
-		eval_config = get_config()
-		eval_config.batch_size = 1
-		eval_config.num_steps = 1
-		print("config ok.")
-		with sess.as_default():
-			initializer = tf.random_uniform_initializer(-config.init_scale,config.init_scale)
-			with tf.name_scope("Test"):
-				test_input = PTBInput(config=eval_config, data=test_data, name="TestInput")
-				with tf.variable_scope("Model", reuse=True, initializer=initializer):
-					mtest = PTBModel(is_training=False, config=eval_config,input_=test_input,is_konlpy=True)	
-			
-			test_perplexity = run_epoch(sess, mtest)
-			print("Test Perplexity: %.3f" % test_perplexity)
-
-		print("END!!!")
+			print("END!!!")
 		return 
 	raw_data = ptb_raw_data(FLAGS.data_path)
 	train_data, valid_data, test_data, _ = raw_data
