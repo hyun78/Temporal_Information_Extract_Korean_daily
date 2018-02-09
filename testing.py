@@ -98,6 +98,8 @@ def make_human_bot(name):
 	return choibot
 	
 def split_data(filename):
+	script_path = os.getcwd()
+	filename = os.path.join(script_path,'database/{filename}'.format(filename=filename))
 	data = load_txt_file(filename)
 	random.shuffle(data)
 	train_idx = round(len(data)*0.8)
@@ -114,6 +116,8 @@ def split_data(filename):
 
 	return 
 def tokenize_data(filename):
+	script_path = os.getcwd()
+	filename = os.path.join(script_path,'database/{filename}'.format(filename=filename))
 	data = load_txt_file(filename)
 	with open(filename,'w') as f:
 		for sentence in data:
