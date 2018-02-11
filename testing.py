@@ -186,7 +186,13 @@ def preprocessing(filename):
 	count_pairs = sorted(counter.items(), key=lambda x: (-x[1], x[0]))
 	size = len(count_pairs)
 	#상몇 프로까지 봐줄까? 90%?
-	criteria = count_pairs[int(size*0.9)][1]
+	cnts = list(counter.values())
+	cnts = set(cnts)
+	cnts = list(cnts)
+	cnts.sort()
+	size = len(cnts)
+
+	criteria = cnts[int(size*0.01)]
 	print("criteria : lower than {num} time appear".format(num=criteria))
 	cl = list(counter.items())
 	with open(filepath+"_parsed",'w') as f:
