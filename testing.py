@@ -181,7 +181,7 @@ def preprocessing(filename):
 	with open(filepath,'r') as f:
 		data = f.read().replace("\n"," <eos> ").split()
 
-
+	import collections
 	counter = collections.Counter(data)
 	count_pairs = sorted(counter.items(), key=lambda x: (-x[1], x[0]))
 	size = len(count_pairs)
