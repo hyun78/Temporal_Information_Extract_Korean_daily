@@ -233,7 +233,7 @@ class PTBModel(object):
 					tf.get_variable_scope().reuse_variables()
 				(cell_output, state) = cell(inputs[:, time_step, :], state)
 				outputs.append(cell_output)
-
+		
 		output = tf.reshape(tf.stack(axis=1, values=outputs), [-1, size])
 		# if is_konlpy:
 		# 	softmax_w = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,scope="Model/softmax_b")[0]

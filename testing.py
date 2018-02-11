@@ -99,8 +99,8 @@ def make_human_bot(name):
 	
 def split_data(filename):
 	script_path = os.getcwd()
-	filename = os.path.join(script_path,'database/{filename}'.format(filename=filename))
-	data = load_txt_file(filename)
+	filepath = os.path.join(script_path,'database/{filename}'.format(filename=filename))
+	data = load_txt_file(filepath)
 	random.shuffle(data)
 	train_idx = round(len(data)*0.8)
 	valid_idx = train_idx+round(len(data)*0.1)
@@ -110,16 +110,16 @@ def split_data(filename):
 	lists = [[train_list,'.train'],[valid_list,'.valid'],[test_list,'.test']]
 	
 	for fdata in lists:
-		with open(filename+fdata[1]+'.txt','w') as f:
+		with open(filepath+fdata[1]+'.txt','w') as f:
 			for sentence in fdata[0]:
 				f.write(sentence+' \n')
 
 	return 
 def tokenize_data(filename):
 	script_path = os.getcwd()
-	filename = os.path.join(script_path,'database/{filename}'.format(filename=filename))
+	filepath = os.path.join(script_path,'database/{filename}'.format(filename=filename))
 	data = load_txt_file(filename)
-	with open(filename,'w') as f:
+	with open(filepath,'w') as f:
 		for sentence in data:
 			try:
 				t = algorithm.kkma.pos(sentence)
@@ -130,7 +130,6 @@ def tokenize_data(filename):
 				pass
 	return
 def recalculate_perplexity():
-	from lstm import *
 	import tensorflow as tf
 
 	#저장된 세션 불러오기
@@ -173,3 +172,40 @@ def recalculate_perplexity():
 			print("Test Perplexity: %.3f" % test_perplexity)
 	print("end")
 	return
+
+
+
+def preprocessing(filename):
+	script_path = os.getcwd()
+	filepath = os.path.join(script_path,'database/{filename}'.format(filename=filename))
+	with open(filepath,'r') as f:
+		data = f.read().replace("\n"," <eos> ").split()
+
+
+	counter = collections.Counter(data)
+	count_pairs = sorted(counter.items(), key=lambda x: (-x[1], x[0]))
+	size = len(count_pairs)
+	#상몇 프로까지 봐줄까? 90%?
+	criteria = count_pairs[int(size*0.9)][1]
+	print("criteria : lower than {num} time appear".format(num=criteria))
+	cl = list(counter.items())
+	with open(filepath+"_parsed",'w') as f:
+		for w in data:
+			if counter[w]>=criteria:
+				f.write(w+' ')
+			else:
+				f.write('<unk> ') #빈도가 적은 단어는 이렇게..
+	return 
+
+#tokenize -> preprocessing -> split
+def refine_data(filename):
+	#1 tokenize data
+	tokenize_data(filename)
+	#2 preprocessing...	
+	preprocessing(filename)
+	#3 split
+	split_data(filename)
+	return 
+
+	
+
