@@ -44,10 +44,13 @@ def preprocessing(filename):
 	cl = list(counter.items())
 	with open(filepath+"_parsed",'w') as f:
 		for w in data:
-			if counter[w]>=criteria:
-				f.write(w+' ')
+			if w=='<eos>':
+				f.write(' \n ')
 			else:
-				f.write('<unk> ') #빈도가 적은 단어는 이렇게..
+				if counter[w]>=criteria:
+					f.write(w+' ')
+				else:
+					f.write('<unk> ') #빈도가 적은 단어는 이렇게..
 	return 
 
 def split_data(filename):
@@ -69,6 +72,14 @@ def split_data(filename):
 
 	return 
 
+def tokenize_word(token,_tag):
+	if token.isdigit():
+		return "<number>"
+	elif _tag=='EMO':
+		return "<emo>"
+	else:
+		return token
+
 def tokenize_data(filename):
 	#primitive data를 raw data로 바꾼다.
 	script_path = os.getcwd()
@@ -79,7 +90,8 @@ def tokenize_data(filename):
 			try:
 				t = algorithm.kkma.pos(sentence)
 				for tk in t:
-					f.write(tk[0] + ' ')
+					new_t = tokenize_word(tk[0],tk[1])
+					f.write(new_t + ' ')
 				f.write('\n ')
 			except:
 				pass
@@ -94,6 +106,47 @@ def refine_data(filename):
 	split_data(filename)
 	return 
 
+def replace_time_word(sentence):
+	s = sentence.split()
+	new_s = []
+	for word in s:
+		if word in time_word:
+			new_s.append(' <time_word> ')
+		else:
+			new_s.append(word)
+	return ' '.join(new_s)
+
+def split_data_v_2(filename):
+	#파일을 8:1:1 train valid test로 나눈다.
+	filepath = generate_filepath(filename)
+	data = load_txt_file(filepath)
+	random.shuffle(data)
+	train_idx = round(len(data)*0.8)
+	
+	train_list = data[:train_idx]
+	valid_list = data[train_idx:]
+	i = 0
+	while True:
+		ridx = 0
+		test_list = [data[ridx]]
+		test_list_2 = [replace_word(data[ridx])]
+		ridx +=1
+		if ridx % 100 == 0:
+			print("replacing still working..",ridx,data[ridx])
+		if ridx==len(data)-1:
+			print("cannot find replacing sentence...")
+			0/0
+			break
+
+	lists = [[train_list,'.train'],[valid_list,'.valid'],[test_list,'.test'],[test_list_2,'.test_sentence']]
+	
+	for fdata in lists:
+		with open(filepath+fdata[1]+'.txt','w') as f:
+			for sentence in fdata[0]:
+				f.write(sentence+' \n')
+
+	return 
+
 #파일에서부터 단어 토큰들을 읽어 오기
 # input  : filename in database folder
 # output : list of words with <eos> ; ex) ['아니','그게','아니라','<eos>']
@@ -101,7 +154,7 @@ def _read_words(filename):
 	script_path = os.getcwd()
 	filepath = os.path.join(script_path,'database/{filename}'.format(filename=filename))
 	with tf.gfile.GFile(filepath,"r") as f:
-		return f.read().split()
+		return f.read().replace('\n',' <eos> ').split()
 
 
 #파일을 읽어다가 word-id로 바꿔주기 
@@ -150,6 +203,7 @@ def ptb_raw_data(data_path=None,vocab_path = None):
 	train_path = filename+".train.txt"
 	valid_path = filename+".valid.txt"
 	test_path = filename+".test.txt"
+	test_path_2 = filename+".test_sentence.txt" # replaced sentence
 
 	if vocab_path is None:
 		vocab_path = train_path
@@ -157,11 +211,12 @@ def ptb_raw_data(data_path=None,vocab_path = None):
 	train_data = _file_to_word_ids(train_path, word_to_id)
 	valid_data = _file_to_word_ids(valid_path, word_to_id)
 	test_data = _file_to_word_ids(test_path, word_to_id)
+	test_data_2 = _file_to_word_ids(test_path_2, word_to_id)
 	#각각의 train_data, valid_data, test_data들은 ptb_producer에 raw_data로 주어지게 된다.
 
 	vocabulary = len(word_to_id)
 
-	return train_data, valid_data, test_data, vocabulary
+	return train_data, valid_data, test_data, vocabulary, test_path_2
 
 ###########################################################################################################
 
@@ -532,17 +587,17 @@ def main(_):
 		raise ValueError("Must set --data_path to PTB data directory")
 	
 	raw_data = ptb_raw_data(FLAGS.data_path) # data 불러오기
-	train_data, valid_data, test_data, _ = raw_data # 데이터 스플릿
+	train_data, valid_data, test_data, _ , test_data_2 = raw_data # 데이터 스플릿
 
 	# configuration 가져오기
 	config = get_config()
-	print("train data?",len(train_data))
-	config.vocab_size = len(train_data)			
-	# config.vocab_size = len(train_data)
+	# print("train data?",len(train_data))
+	# config.vocab_size = len(train_data)			
+	config.vocab_size = _ +1
 	
 	eval_config = get_config()
-	eval_config.vocab_size = len(train_data)
-
+	# eval_config.vocab_size = len(train_data)
+	eval_config.vocab_size = _ +1
 	eval_config.batch_size = 1
 	eval_config.num_steps = 1
 
@@ -570,7 +625,10 @@ def main(_):
 			test_input = PTBInput(config=eval_config, data=test_data, name="TestInput")
 			with tf.variable_scope("Model", reuse=True, initializer=initializer):
 				mtest = PTBModel(is_training=False, config=eval_config,input_=test_input)
-		
+		with tf.name_scope("Test2"):
+			test_input = PTBInput(config=eval_config, data=test_data_2, name="TestInput")
+			with tf.variable_scope("Model", reuse=True, initializer=initializer):
+				mtest2 = PTBModel(is_training=False, config=eval_config,input_=test_input)
 		sv = tf.train.Supervisor(logdir=FLAGS.save_path)
 		
 		with sv.managed_session() as session:
@@ -588,7 +646,10 @@ def main(_):
 
 			#학습이 끝났으면, test 결과값 계산
 			test_perplexity = run_epoch(session, mtest)
-			print("Test Perplexity: %.3f" % test_perplexity)
+			print("Test Perplexity: %.3f #original sentence" % test_perplexity)
+			test_perplexity2 = run_epoch(session, mtest2)
+			print("Test Perplexity: %.3f #replaced sentence" % test_perplexity2)
+
 
 			if FLAGS.save_path:
 				print("Saving model to %s." % FLAGS.save_path)
