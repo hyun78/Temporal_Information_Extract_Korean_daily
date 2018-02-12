@@ -129,6 +129,8 @@ def _file_to_word_ids(filename, word_to_id):
 
 
 
+
+
 def ptb_raw_data(data_path=None,vocab_path = None):
 	""" "data_path"에 정의된 데이터 디렉토리로부터 raw PTB 데이터를 로드한다.
 	PTB 텍스트 파일을 읽고, 문자열들(strings)을 정수 id값들(integer ids)로 변환한다.
@@ -148,15 +150,20 @@ def ptb_raw_data(data_path=None,vocab_path = None):
 	train_path = filename+".train.txt"
 	valid_path = filename+".valid.txt"
 	test_path = filename+".test.txt"
+
 	if vocab_path is None:
 		vocab_path = train_path
 	word_to_id = _build_vocab(train_path)
 	train_data = _file_to_word_ids(train_path, word_to_id)
 	valid_data = _file_to_word_ids(valid_path, word_to_id)
 	test_data = _file_to_word_ids(test_path, word_to_id)
+	#각각의 train_data, valid_data, test_data들은 ptb_producer에 raw_data로 주어지게 된다.
+
 	vocabulary = len(word_to_id)
 
 	return train_data, valid_data, test_data, vocabulary
+
+###########################################################################################################
 
 def ptb_producer(raw_data, batch_size, num_steps, name=None):
 	"""raw PTB 데이터에 대해 반복한다.
@@ -172,24 +179,30 @@ def ptb_producer(raw_data, batch_size, num_steps, name=None):
 	에러값 발생(Raises):
 	tf.errors.InvalidArgumentError: batch_size나 num_steps가 너무 크면 발생한다.
 	"""
+	#텐서를 만들어서 그래프에 추가한다고 보면 된다. 텐서 이름은 name으로 추가할 수 있다.
 	with tf.name_scope(name, "PTBProducer", [raw_data, batch_size, num_steps]):
+		#raw data를 텐서로 변환한다. 텐서는 정형화된 다차원 배열이다. 
 		raw_data = tf.convert_to_tensor(raw_data, name="raw_data", dtype=tf.int32)
 
 		data_len = tf.size(raw_data)
-		batch_len = data_len // batch_size
+		batch_len = data_len // batch_size # small config의 경우 10000//20 == 500
 		
+		# raw data가 N개의 단어로 이루어졌다면, batch size만큼의 크기를 가지는 batch len개로 나눈다.
+		# 즉, 1*N에서 BS * BL의 2차원 데이터가 된다고 보면 되겠다.
 		data = tf.reshape(raw_data[0 : batch_size * batch_len],
 			[batch_size, batch_len])
-		epoch_size = (batch_len - 1) // num_steps
+		epoch_size = (batch_len - 1) // num_steps #smallconfig의 겨우 499//20 = 24
 		assertion = tf.assert_positive(
 			epoch_size,
 			message="epoch_size == 0, decrease batch_size or num_steps")
 		with tf.control_dependencies([assertion]):
-			epoch_size = tf.identity(epoch_size, name="epoch_size")
+			epoch_size = tf.identity(epoch_size, name="epoch_size") #epoch size를 갱신하는 것.
 
-		i = tf.train.range_input_producer(epoch_size, shuffle=False).dequeue()
-		x = tf.strided_slice(data, [0, i * num_steps],
-			[batch_size, (i + 1) * num_steps])
+		i = tf.train.range_input_producer(epoch_size, shuffle=False).dequeue() # 0~23까지의 숫자를 만든다. i = 0이 되는 것.
+		print("i value",i)
+		print("shape of x",batch_size,num_steps)
+		x = tf.strided_slice(data, [0, i * num_steps], 
+			[batch_size, (i + 1) * num_steps]) #data를 [0,0] [20,20], [0,20],[20,40], ... 이렇게 잘라 나간다. 
 		x.set_shape([batch_size, num_steps])
 		y = tf.strided_slice(data, [0, i * num_steps + 1],
 			[batch_size, (i + 1) * num_steps + 1])
@@ -524,9 +537,12 @@ def main(_):
 	# configuration 가져오기
 	config = get_config()
 	print("train data?",len(train_data))
+	config.vocab_size = len(train_data)			
 	# config.vocab_size = len(train_data)
 	
 	eval_config = get_config()
+	eval_config.vocab_size = len(train_data)
+
 	eval_config.batch_size = 1
 	eval_config.num_steps = 1
 
