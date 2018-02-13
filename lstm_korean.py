@@ -4,7 +4,7 @@ import os
 import sys, random
 
 import tensorflow as tf
-
+import algorithm
 #원래는 http://solarisailab.com/archives/1925 여기에 있는 코드를 가져다가 수정한 것임.
 
 #primtive data : 문장이 \n 으로 구분된 문서
