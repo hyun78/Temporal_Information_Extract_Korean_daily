@@ -78,7 +78,7 @@ def tokenize_word(token,_tag):
 	elif _tag=='EMO':
 		return "<emo>"
 	else:
-		return token
+		return replace_time_word(token)
 
 def tokenize_data(filename):
 	#primitive data를 raw data로 바꾼다.
@@ -169,20 +169,21 @@ time_word = [
 	'부터',
 	'까지',
 	]
-
-	
-def replace_time_word(sentence):
+def replace_time_word(word):
+	if word in time_word:
+		r = random.randint(0,3)
+		if r>=1:
+			return ' <time_word> '
+		else:
+			return word
+	else:
+		return word
+	return
+def replace_time_sentence(sentence):
 	s = sentence.split()
 	new_s = []
 	for word in s:
-		if word in time_word:
-			r = random.randint(0,3)
-			if r>=1:
-				new_s.append(' <time_word> ')
-			else:
-				new_s.append(word)
-		else:
-			new_s.append(word)
+			new_s.append(replace_time_word(word))
 	return ' '.join(new_s)
 
 def split_data_v_2(filename):
@@ -198,7 +199,7 @@ def split_data_v_2(filename):
 	while True:
 		ridx = 0
 		test_list = [data[ridx]]
-		test_list_2 = [replace_word(data[ridx])]
+		test_list_2 = [replace_time_sentence(data[ridx])]
 		ridx +=1
 		if ridx % 100 == 0:
 			print("replacing still working..",ridx,data[ridx])
