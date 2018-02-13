@@ -105,13 +105,82 @@ def refine_data(filename):
 	#3 split
 	split_data(filename)
 	return 
+time_word = [
+	
+	'내년',
+	'작년',
+	'요즘',
+	'이번',
+	'어제',
+	'하루',
+	'이틀',
+	'사흘',
+	'나흘',
+	'주일',
+	'오후',
+	'오전',
+	'올해',
+	'오늘',
+	'내일',
+	'아침',
+	'점심',
+	'저녁',
+	'낮',
+	'밤',
+	'새벽',
+	'얼마나',
+	'그날'
+	'년',
+	'전',
+	'때',
+	'봄',
+	'여름',
+	'가을',
+	'동안',
+	'겨울',
+	'중',
+	'종일',
+	'지금',
+	'옛',
+	'옛날',
+	'이전',
+	'예전',
+	'금방',
+	'막',
+	'방금',
+	'나중',
+	'당장',
+	'저번',
+	'후에',
+	'최근',
+	'지난',
+	'처음',
+	'아침',
+	'점심',
+	'저녁',
+	'낮',
+	'밤',
+	'새벽',
+	'얼마나',
+	'그날'
+	'년',
+	'전',
+	'때',
+	'부터',
+	'까지',
+	]
 
+	
 def replace_time_word(sentence):
 	s = sentence.split()
 	new_s = []
 	for word in s:
 		if word in time_word:
-			new_s.append(' <time_word> ')
+			r = random.randint(0,3)
+			if r>=1:
+				new_s.append(' <time_word> ')
+			else:
+				new_s.append(word)
 		else:
 			new_s.append(word)
 	return ' '.join(new_s)
