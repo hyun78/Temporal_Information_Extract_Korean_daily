@@ -94,6 +94,7 @@ def tokenize_data(filename):
 					f.write(new_t + ' ')
 				f.write('\n ')
 			except:
+				print("what's wrong!",sentence)
 				pass
 	return
 #tokenize -> preprocessing -> split
