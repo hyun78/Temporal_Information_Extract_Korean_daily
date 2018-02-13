@@ -180,11 +180,11 @@ def replace_time_word(word,rand_replace=False):
 	else:
 		return word
 	return
-def replace_time_sentence(sentence):
+def replace_time_sentence(sentence,rand_replace=False):
 	s = sentence.split()
 	new_s = []
 	for word in s:
-			new_s.append(replace_time_word(word))
+			new_s.append(replace_time_word(word,rand_replace))
 	return ' '.join(new_s)
 
 def has_time_words(sentence):
