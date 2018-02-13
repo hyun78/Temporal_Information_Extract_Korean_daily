@@ -1,7 +1,7 @@
 # LSTM model
 import collections
 import os
-import sys
+import sys, random
 
 import tensorflow as tf
 
