@@ -298,7 +298,7 @@ def ptb_raw_data(data_path=None,vocab_path = None):
 
 	vocabulary = len(word_to_id)
 
-	return train_data, valid_data, test_data, vocabulary, test_path_2
+	return train_data, valid_data, test_data, vocabulary, test_data_2
 
 ###########################################################################################################
 
@@ -707,6 +707,7 @@ def main(_):
 			test_input = PTBInput(config=eval_config, data=test_data, name="TestInput")
 			with tf.variable_scope("Model", reuse=True, initializer=initializer):
 				mtest = PTBModel(is_training=False, config=eval_config,input_=test_input)
+		
 		with tf.name_scope("Test2"):
 			test_input = PTBInput(config=eval_config, data=test_data_2, name="TestInput")
 			with tf.variable_scope("Model", reuse=True, initializer=initializer):
