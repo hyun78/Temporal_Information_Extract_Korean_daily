@@ -204,9 +204,9 @@ def split_data_v_2(filename):
 	
 	train_list = data[:train_idx]
 	valid_list = data[train_idx:]
-	i = 0
+	ridx = 0
 	while True:
-		ridx = 0
+		
 		test_list = [data[ridx]]
 		test_list_2 = [replace_time_sentence(data[ridx],rand_replace=True)]
 		if has_time_words(data[ridx]):
