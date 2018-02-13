@@ -201,6 +201,8 @@ def split_data_v_2(filename):
 		ridx = 0
 		test_list = [data[ridx]]
 		test_list_2 = [replace_time_sentence(data[ridx])]
+		if test_list[0]!=test_list_2[0]:
+			break
 		ridx +=1
 		if ridx % 100 == 0:
 			print("replacing still working..",ridx,data[ridx])
@@ -208,6 +210,7 @@ def split_data_v_2(filename):
 			print("cannot find replacing sentence...")
 			0/0
 			break
+
 
 	lists = [[train_list,'.train'],[valid_list,'.valid'],[test_list,'.test'],[test_list_2,'.test_sentence']]
 	
