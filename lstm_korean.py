@@ -170,10 +170,10 @@ time_word = [
 	'부터',
 	'까지',
 	]
-def replace_time_word(word):
+def replace_time_word(word,rand_replace=False):
 	if word in time_word:
 		r = random.randint(0,3)
-		if r>=1:
+		if r>=1 or rand_replace:
 			return ' <time_word> '
 		else:
 			return word
@@ -186,6 +186,14 @@ def replace_time_sentence(sentence):
 	for word in s:
 			new_s.append(replace_time_word(word))
 	return ' '.join(new_s)
+
+def has_time_words(sentence):
+	s = sentence.split()
+	new_s = []
+	for word in s:
+		if word in time_word:
+			return True
+	return False
 
 def split_data_v_2(filename):
 	#파일을 8:1:1 train valid test로 나눈다.
@@ -200,8 +208,8 @@ def split_data_v_2(filename):
 	while True:
 		ridx = 0
 		test_list = [data[ridx]]
-		test_list_2 = [replace_time_sentence(data[ridx])]
-		if test_list[0]!=test_list_2[0]:
+		test_list_2 = [replace_time_sentence(data[ridx],rand_replace=True)]
+		if has_time_words(data[ridx]):
 			break
 		ridx +=1
 		if ridx % 100 == 0:
