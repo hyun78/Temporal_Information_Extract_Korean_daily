@@ -56,7 +56,7 @@ def preprocessing(filename):
 def split_data(filename):
 	#파일을 8:1:1 train valid test로 나눈다.
 	filepath = generate_filepath(filename)
-	data = load_txt_file(filepath)
+	data = load_txt_file(filename)
 	random.shuffle(data)
 	train_idx = round(len(data)*0.8)
 	valid_idx = train_idx+round(len(data)*0.1)
