@@ -336,8 +336,8 @@ def ptb_producer(raw_data, batch_size, num_steps, name=None):
 			epoch_size = tf.identity(epoch_size, name="epoch_size") #epoch size를 갱신하는 것.
 
 		i = tf.train.range_input_producer(epoch_size, shuffle=False).dequeue() # 0~23까지의 숫자를 만든다. i = 0이 되는 것.
-		print("i value",i)
-		print("shape of x",batch_size,num_steps)
+		# print("i value",i)
+		# print("shape of x",batch_size,num_steps)
 		x = tf.strided_slice(data, [0, i * num_steps], 
 			[batch_size, (i + 1) * num_steps]) #data를 [0,0] [20,20], [0,20],[20,40], ... 이렇게 잘라 나간다. 
 		x.set_shape([batch_size, num_steps])
@@ -676,7 +676,7 @@ def main(_):
 	# print("train data?",len(train_data))
 	# config.vocab_size = len(train_data)			
 	config.vocab_size = _ +1
-	
+	print("vocab_size : {num}, config_size: {num2}".format(num=_,num2=10000))
 	eval_config = get_config()
 	# eval_config.vocab_size = len(train_data)
 	eval_config.vocab_size = _ +1
