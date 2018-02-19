@@ -273,12 +273,13 @@ def ptb_raw_data(data_path=None,vocab_path = None):
 	train_data = _file_to_word_ids(train_path, word_to_id)
 	valid_data = _file_to_word_ids(valid_path, word_to_id)
 	test_data = _file_to_word_ids(test_path, word_to_id)
-	test_data_2 = _file_to_word_ids(test_path_2, word_to_id)
+	# test_data_2 = _file_to_word_ids(test_path_2, word_to_id)
+
 	#각각의 train_data, valid_data, test_data들은 ptb_producer에 raw_data로 주어지게 된다.
 
 	vocabulary = len(word_to_id)
 
-	return train_data, valid_data, test_data, vocabulary, test_data_2,word_to_id
+	return train_data, valid_data, test_data, vocabulary, word_to_id
 
 ###########################################################################################################
 
@@ -648,7 +649,7 @@ def main(_):
 		raise ValueError("Must set --data_path to PTB data directory")
 	
 	raw_data = ptb_raw_data(FLAGS.data_path) # data 불러오기
-	train_data, valid_data, test_data, _ , test_data_2,word_to_id = raw_data # 데이터 스플릿
+	train_data, valid_data, test_data, _ , word_to_id = raw_data # 데이터 스플릿
 
 	# configuration 가져오기
 	config = get_config()
