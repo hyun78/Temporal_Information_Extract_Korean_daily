@@ -704,7 +704,7 @@ def main(_):
 			test_data_temp = _file_to_word_ids(test_path_temp, word_to_id) #각 테스트파일을 읽기 
 			with tf.name_scope("Testsent"+sentfile):
 				tlist.append(PTBInput(config=eval_config, data=test_data_temp, name="TestInput")) # 각 테스트 데이터마다 하나의 테스트 인풋 오브젝트 생성
-				test_input = tilst[-1] # 테스트 인풋 오브젝트 설정 
+				test_input = tlist[-1] # 테스트 인풋 오브젝트 설정 
 				with tf.variable_scope("Model", reuse=True, initializer=initializer): # 설정된 테스트 인풋 오브젝트로  모델 생성 
 					mtests.append( PTBModel(is_training=False, config=eval_config,input_=test_input))
 			
