@@ -106,7 +106,7 @@ def tokenize_data(filename,time_flag=True):
 			try:
 				t = algorithm.kkma.pos(sentence)
 				for tk in t:
-					new_t = tokenize_word(tk[0],tk[1])
+					new_t = tokenize_word(tk[0],tk[1],time_flag)
 					f.write(new_t + ' ')
 				f.write('\n ')
 			except:
@@ -127,7 +127,7 @@ def refine_data(filepath,vocab_name,is_dir=False):
 				continue
 			#1 tokenize data
 
-			tokenize_data(filepath+'/'+filename) # testfolder/raw/filename
+			tokenize_data(filepath+'/'+filename,time_flag=False) # testfolder/raw/filename
 			#2 preprocessing...	
 			preprocessing(filepath+'/'+filename,vocab,counter_=counter_,attach_parsed=False)	
 	else:
@@ -742,15 +742,15 @@ def main(_):
 			# print("Test Perplexity: %.3f #replaced sentence" % test_perplexity2)
 			raw_perplexities = []
 			for tm in mtests:
-				test_perplexity2 = run_epoch(session, mtest2)
+				test_perplexity2 = run_epoch(session, tm)
 				print("Test Perplexity: %.3f #replaced sentence" % test_perplexity2)
 				raw_perplexities.append(test_perplexity2)
 			raw_perplexities2 = []
 			for tm in mtests2:
-				test_perplexity2 = run_epoch(session, mtest2)
+				test_perplexity2 = run_epoch(session, tm)
 				print("Test Perplexity: %.3f #replaced sentence" % test_perplexity2)
 				raw_perplexities2.append(test_perplexity2)
-				
+
 
 			if FLAGS.save_path:
 				print("Saving model to %s." % FLAGS.save_path)
