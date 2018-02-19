@@ -140,7 +140,7 @@ def refine_data(filepath,vocab_name,is_dir=False):
 		preprocessing(filename,vocab,counter)
 	return 
 time_word = ['내년','작년','요즘','이번','어제','하루','이틀','사흘','나흘','주일','오후',
-	'오전','올해','오늘','내일','아침','점심','저녁','낮','밤','새벽','얼마나','그날''년','전','때',
+	'오전','올해','오늘','내일','아침','점심','저녁','낮','밤','새벽','얼마나','그날','년','전','때',
 	'봄','여름','가을','동안','겨울','중','종일','지금','옛','옛날','이전','예전','금방','막','방금','나중',
 	'당장','저번','후에','최근','지난','처음','부터','까지','월','일']
 def replace_time_word(word,rand_replace=False):
@@ -683,10 +683,10 @@ def main(_):
 			tf.summary.scalar("Validation Loss", mvalid.cost)
 
 		#test 모델 설정
-		# with tf.name_scope("Test"):
-		# 	test_input = PTBInput(config=eval_config, data=test_data, name="TestInput")
-		# 	with tf.variable_scope("Model", reuse=True, initializer=initializer):
-		# 		mtest = PTBModel(is_training=False, config=eval_config,input_=test_input)
+		with tf.name_scope("Test"):
+			test_input = PTBInput(config=eval_config, data=test_data, name="TestInput")
+			with tf.variable_scope("Model", reuse=True, initializer=initializer):
+				mtest = PTBModel(is_training=False, config=eval_config,input_=test_input)
 		
 		# with tf.name_scope("Test2"):
 		# 	test_input = PTBInput(config=eval_config, data=test_data_2, name="TestInput")
@@ -744,14 +744,14 @@ def main(_):
 				print("Epoch: %d Valid Perplexity: %.3f" % (i + 1, valid_perplexity))
 
 			#학습이 끝났으면, test 결과값 계산
-			# test_perplexity = run_epoch(session, mtest)
-			# print("Test Perplexity: %.3f #original sentence" % test_perplexity)
+			test_perplexity = run_epoch(session, mtest)
+			print("Test Perplexity: %.3f #original sentence" % test_perplexity)
 			# test_perplexity2 = run_epoch(session, mtest2)
 			# print("Test Perplexity: %.3f #replaced sentence" % test_perplexity2)
 			raw_perplexities = []
 			for tm in mtests:
 				test_perplexity2 = run_epoch(session, tm)
-				print("Test Perplexity: %.3f #replaced sentence" % test_perplexity2)
+				print("Test Perplexity: %.3f #parsed sentence" % test_perplexity2)
 				raw_perplexities.append(test_perplexity2)
 			raw_perplexities2 = []
 			for tm in mtests2:
